@@ -1,0 +1,56 @@
+#!/bin/sh
+set -e
+
+loop=false
+if [[ "$1" == "--loop" ]]; then
+    loop=true
+    echo "Calling in loop!"
+    echo ""
+fi
+
+set -u
+
+function _api_request_to_remote_dir() {
+    set -eu
+    http_method=$1
+    url=${NC_URL}remote.php/dav/files/$NC_USER/$NC_REMOTE_DIR
+    if curl -s -u $NC_USER:$NC_PASS $url -X $http_method | grep d:error 1> /dev/null ; then
+        echo "error"
+        return 1
+    else
+        echo "success"
+        return 0
+    fi
+}
+function check_remote_dir_exists() {
+    echo "checking whether the remote dir ($NC_REMOTE_DIR) exists"
+    _api_request_to_remote_dir "PROPFIND"
+    return $?
+}
+
+function create_remote_dir() {
+    echo "creating the remote dir ($NC_REMOTE_DIR)"
+    _api_request_to_remote_dir "MKCOL"
+    return $?
+}
+
+# ensure that the local dir exists
+[ -d $NC_LOCAL_DIR ]
+
+# ensure that the remote dir exists
+echo ""
+check_remote_dir_exists || create_remote_dir
+echo ""
+
+while true
+do
+	nextcloudcmd --non-interactive -u $NC_USER -p $NC_PASS $NC_LOCAL_DIR ${NC_URL}remote.php/webdav/$NC_REMOTE_DIR
+
+    if [[ ! $loop == "true" ]]; then
+        echo ""
+        echo "Called without '--loop', so exiting now."
+        exit
+    fi
+	
+	sleep $NC_INTERVAL
+done

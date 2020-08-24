@@ -1,0 +1,72 @@
+{% extends "page.html" %}
+{% if announcement_spawn %}
+  {% set announcement = announcement_spawn %}
+{% endif %}
+
+{% block main %}
+
+<div class="container">
+  {% block heading %}
+  <div class="row text-center">
+    <h1>Authorization for Nextcloud is needed!</h1>
+  </div>
+  {% endblock %}
+  <div class="row col-sm-offset-2 col-sm-8">
+    {% if for_user and user.name != for_user.name -%}
+      <p>Spawning server for {{ for_user.name }}</p>
+    {% endif -%}
+
+    <form id="spawn_form" action="{{url}}" method="post" role="form">
+      <p class="text-muted">
+        Your notebooks will be stored within your Nextcloud account.
+        To make this happen, you are hereby asked to grant, to this Jupyter Notebook service,
+        the access to your files in Nextcloud.
+        This is a one-time operation.
+      </p>
+
+      <p>&nbsp;</p>
+      {% if error_message -%}
+        <div class="alert alert-danger spawn-error-msg" role="alert">
+          {{error_message}}
+        </div>
+      {% endif %}
+
+      <p>First go to Nextcloud to grant the access:</p>
+      {#
+        Variable 'spawner_options_form' contains Nextcloud authorization URL.
+      #}
+      <a href="{{spawner_options_form | safe}}" target="_blank" class="btn btn-jupyter form-control">
+        Grant access in Nextcloud
+      </a>
+
+      <p>&nbsp;</p>
+      <p>When the access is granted, you can:</p>
+      <input type="submit" value="Start Notebooks" class="btn btn-jupyter form-control">
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+{#
+  checks what happens after submitting the form
+  status 200 means that the access is not granted, so we still wait
+  status 400 means that the access is granted (*), so we can refresh the current page to see spawning status
+  (* - the form is successfully submitted, it starts further processing and raises an error
+  that the AJAX request do not support JS...)
+#}
+<script type="text/javascript">
+  var INTERVAL_SECONDS = 2;
+  function waitForSpawning() {
+    var form = $('#spawn_form');
+    var url = form.attr('action');
+    jQuery.post(url).statusCode({
+      400: function() {
+        window.location.href = url;
+      }
+    });
+  }
+  setInterval(waitForSpawning, INTERVAL_SECONDS * 1000);
+</script>
+{% endblock %}
