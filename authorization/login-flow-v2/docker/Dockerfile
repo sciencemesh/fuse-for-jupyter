@@ -14,8 +14,8 @@ COPY templates /opt/templates
 COPY nextcloud_spawner /opt/nextcloud_spawner
 RUN pip3 install /opt/nextcloud_spawner
 
-# switching back to the default user in the base image
-USER ${NB_USER}
+# switching back to the default user of the base image
+USER jovyan
 
 ###
 ###
@@ -37,5 +37,5 @@ RUN apt-get update && \
 # add dev configuration
 COPY docker/dev_jupyterhub_config.py /etc/jupyterhub/jupyterhub_config.py
 
-# switching back to the default user in the base image
-USER ${NB_USER}
+# switching back to the default user of the base image
+USER jovyan
