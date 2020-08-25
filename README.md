@@ -41,3 +41,17 @@ Some comprehensive usage examples:
 
 - [examples/z2jh-sync](examples/z2jh-sync) - the sync and login-flow-v2 approaches
 implemented within [Zero To JupyterHub](https://zero-to-jupyterhub.readthedocs.io/)
+
+## Docker images
+
+Docker images defined in this repo are automatically built and published in 
+[GitHub Packages registry](https://github.com/sciencemesh/filesystem-for-jupyter/packages).
+
+The Docker images are:
+```
+docker.pkg.github.com/sciencemesh/filesystem-for-jupyter/jupyterhub
+docker.pkg.github.com/sciencemesh/filesystem-for-jupyter/sync
+```
+
+[Read here](https://docs.github.com/en/packages/using-github-packages-with-your-projects-ecosystem/configuring-docker-for-use-with-github-packages)
+how to access the registry.

@@ -1,0 +1,42 @@
+name: Publish Docker images
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-push:
+    name: Push Docker images to GitHub Packages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+        
+      - name: Push image for authorization/login-flow-v2/
+        uses: docker/build-push-action@v1.1.0
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          repository: sciencemesh/filesystem-for-jupyter/jupyterhub
+          tag_with_ref: true
+          tag_with_sha: true
+          path: authorization/login-flow-v2/
+          dockerfile: authorization/login-flow-v2/docker/Dockerfile
+          target: jupyterhub-official
+
+      - name: Push image for sync/
+        uses: docker/build-push-action@v1.1.0
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          repository: sciencemesh/filesystem-for-jupyter/sync
+          tag_with_ref: true
+          tag_with_sha: true
+          path: sync/
+          dockerfile: sync/Dockerfile
+ 
