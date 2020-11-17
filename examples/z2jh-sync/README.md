@@ -14,9 +14,29 @@ Make your Kubernetes able to pull the images.
 Check section 'Docker images' in the main [README](../../README.md). 
 
 Setup JupyterHub as [documented in Z2JH](https://zero-to-jupyterhub.readthedocs.io/en/latest/setup-jupyterhub/setup-jupyterhub.html),
-adjusting `config.yaml` as follows:
+adjusting `config.yaml` as given below.
+
+For instance:
 
 ```
+helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
+helm repo update
+
+helm upgrade --cleanup-on-fail \
+  --install jhub jupyterhub/jupyterhub \
+  --version=0.9.0 \
+  --values config.yaml
+```
+
+Example for `config.yaml`:
+
+```
+proxy:
+  # `openssl rand -hex 32`
+  secretToken: 14836d60c5e9fe8a9c9e2cec7693687d6ba024f2593f01425f522e1d2525dba1
+  https:
+    enabled: false
+
 hub:
   image:
     name: docker.pkg.github.com/sciencemesh/filesystem-for-jupyter/jupyterhub
