@@ -29,7 +29,8 @@ hub:
     c.Spawner.cmd = ['jupyter-labhub']
     c.JupyterHub.spawner_class = 'nextcloud_spawner.NextcloudKubeSpawner'
   extraEnv:
-    JUPYTERHUB_CRYPT_KEY: sUpeRSecReT12345
+    # `openssl rand -hex 32`
+    JUPYTERHUB_CRYPT_KEY: 7757f14cbf7d4fd47939a559ef13110c460c535a4d3d87eb7c33d66c50473df8
     NC_HANDLER_IMAGE: docker.pkg.github.com/sciencemesh/filesystem-for-jupyter/sync:latest
     NC_URL: https://drive.example.com/
     NC_REMOTE_DIR: notebooks
