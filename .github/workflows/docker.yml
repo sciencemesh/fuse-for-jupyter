@@ -39,4 +39,15 @@ jobs:
           tag_with_sha: true
           path: sync/
           dockerfile: sync/Dockerfile
- 
+
+      - name: Push image for fuse/
+        uses: docker/build-push-action@v1.1.0
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          repository: sciencemesh/filesystem-for-jupyter/fuse
+          tag_with_ref: true
+          tag_with_sha: true
+          path: fuse/
+          dockerfile: fuse/Dockerfile
