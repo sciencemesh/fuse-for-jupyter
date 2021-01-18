@@ -44,5 +44,6 @@ docker run \
 ```
 
 Notes:
+* It runs a regular Jupyter notebook server. Check logs to access the user interface.
 * The home directory is `/home/jovyan`, so the remote files will be mounted to `/home/jovyan/drive`.
 * `JUPYTER_ENABLE_LAB` is the base image's config option to enable the JupyterLab user interface.
