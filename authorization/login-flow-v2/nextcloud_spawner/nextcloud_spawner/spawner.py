@@ -1,43 +1,45 @@
 import os
 
-from cached_property import cached_property
 from jupyterhub.spawner import SimpleLocalProcessSpawner
 from kubespawner import KubeSpawner
 
-from .credentials import NcCredentials, NcCredentialsManager
+from .credentials import NcCredentials, NcAuthorizationFlow
+from .nc_handler import NextcloudFilesystemHandlerContainer
 
 # just checking if it's set because it's needed
 os.environ['JUPYTERHUB_CRYPT_KEY']
-NC_HANDLER_IMAGE = os.environ['NC_HANDLER_IMAGE']
 NC_URL = os.environ['NC_URL']
-NC_REMOTE_DIR = os.environ['NC_REMOTE_DIR']
 
 
 class NextcloudSpawnerMixin:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.nc_handler_image = NC_HANDLER_IMAGE
         self.nc_url = NC_URL
-        self.nc_remote_dir = NC_REMOTE_DIR
+        self._nc_authorization_flow = None
+        self._reset_nc_authorization_flow()
 
     def options_form(self, _):
-        """ returns a HTML form if NC grant is needed """
-        authz_url = self.get_authorization_url_if_needed()
-        if authz_url:
-            return authz_url
-        else:
+        """ Returns a HTML form if NC grant is needed. None otherwise. """
+        if self._has_valid_nc_credentials():
+            self.log.info('NC credentials already stored in the database')
             return None
 
-    def options_from_form(self, _):
+        return {
+            'authorization_url': self._nc_authorization_flow.get_authorization_url(),
+        }
+
+    def options_from_form(self, form_data):
         """ Validates the form
         i.e. raises error if NC grant is not completed
-        or returns NC credentials to be stored in db (encrypted!), once it's completed
+        or returns NC credentials to be stored in db (encrypted!), once it's completed.
+
+        Form data comes as a dict of lists of strings.
         """
-        encrypted_nc_credentials = self.get_credentials_from_nc()
-        if encrypted_nc_credentials:
+        nc_credentials = self._try_reading_credentials_from_nc()
+        if nc_credentials:
             # returned data will be saved in the Hub db
-            return encrypted_nc_credentials
+            return nc_credentials.to_encrypted_dict()
         else:
             raise Exception('The access is not yet granted in Nextcloud!')
 
@@ -48,77 +50,38 @@ class NextcloudSpawnerMixin:
             return
 
         try:
-            nc_sync_container = {
-                'name': 'nc-handler',
-                'image': self.nc_handler_image,
-                'volumeMounts': [{
-                    'mountPath': '/home/jovyan',
-                    'name': 'volume-{username}',
-                }],
-                'env': self.get_k8s_env(),
-            }
-            self.extra_containers.append(nc_sync_container)
-        except NcCredentials.Invalid:
+            handler_container = NextcloudFilesystemHandlerContainer(self._get_stored_nc_credentials())
+            self.extra_containers.append(handler_container.to_extra_container_dict())
+        except NcCredentials.DeserializationError:
             # illegal state
             self.log.error('NC credentials cannot be read from user_options. The options are: %s' % self.user_options)
             raise Exception('Nextcloud credentials cannot be found. ' +
                             'If the problem persists, please contact administrator.')
 
-    def get_authorization_url_if_needed(self):
-        if self.has_valid_nc_credentials():
-            self.log.info('NC credentials already stored in the database')
-            return None
-        else:
-            self.log.info('getting NC authorization URL...')
-            authz_url = self.nc_credentials_manager.get_authorization_url()
-            self.log.info('NC authorization URL: %s' % authz_url)
-            return authz_url
-
-    def has_valid_nc_credentials(self):
-        options = self._get_stored_user_options()
+    def _has_valid_nc_credentials(self):
         try:
-            nc_credentials = NcCredentials.from_encrypted_dict(options)
-            return self.nc_credentials_manager.check_credentials_are_valid(nc_credentials)
-        except NcCredentials.Invalid:
+            nc_credentials = self._get_stored_nc_credentials()
+            return self._nc_authorization_flow.check_credentials_are_valid(nc_credentials)
+        except NcCredentials.DeserializationError:
             return False
 
-    def get_credentials_from_nc(self):
+    def _get_stored_nc_credentials(self):
+        return NcCredentials.from_encrypted_dict(self._get_stored_user_options())
+
+    def _try_reading_credentials_from_nc(self):
         try:
-            self.log.info('trying to read credentials from NC...')
-            nc_credentials = self.nc_credentials_manager.read_credentials()
+            nc_credentials = self._nc_authorization_flow.read_credentials()
             self.log.info('NC credentials successfully obtained!')
-            return nc_credentials.to_encrypted_dict()
-        except self.nc_credentials_manager.CredentialsNotAvailable:
-            self.log.warning('NC credentials not available in NC!')
+            return nc_credentials
+        except NcAuthorizationFlow.CredentialsNotYetAvailable:
+            self.log.info('NC credentials not yet available in NC!')
             return None
 
-    @cached_property
-    def nc_credentials_manager(self):
-        return NcCredentialsManager(
-            nc_url=self.nc_url,
-            logger=self.log.info
-        )
+    def _reset_nc_authorization_flow(self):
+        self._nc_authorization_flow = NcAuthorizationFlow(nc_url=self.nc_url)
 
     def _get_stored_user_options(self):
         return self.orm_spawner.user_options or {}
-
-    def get_k8s_env(self):
-        env_list = list()
-        for name, value in self.get_raw_env().items():
-            env_list.append({
-                'name': name,
-                'value': value,
-            })
-        return env_list
-
-    def get_raw_env(self):
-        nc_credentials = NcCredentials.from_encrypted_dict(self._get_stored_user_options())
-        env = dict()
-        env['NC_URL'] = self.nc_url
-        env['NC_REMOTE_DIR'] = self.nc_remote_dir
-        env['NC_USER'] = nc_credentials.user
-        env['NC_PASS'] = nc_credentials.password
-        return env
 
 
 class NextcloudLocalProcessSpawner(NextcloudSpawnerMixin, SimpleLocalProcessSpawner):

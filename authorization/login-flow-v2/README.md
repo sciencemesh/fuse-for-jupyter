@@ -34,14 +34,15 @@ c.JupyterHub.template_paths = ['/opt/templates']  # path to this 'templates' dir
 ```
 
 Set the environmental variables for JupyterHub:
-- NC_HANDLER_IMAGE - Docker image to be run as extra container within
+- `NC_HANDLER_IMAGE` - Docker image to be run as extra container within
 the single-user pod, e.g. [nextcloudcmd image](../../sync) 
-- NC_URL - Nextcloud URL, e.g. `https://drive.example.com/`
-- NC_REMOTE_DIR - user directory in Nextcloud to be synchronized; 
+- `NC_URL` - Nextcloud URL, e.g. `https://drive.example.com/`
+- `NC_REMOTE_DIR` - user directory in Nextcloud to be synchronized; 
 empty string for user root directory
-- NC_JUPYTER_LABEL - name of the JupyterHub instance to be presented to Nextcloud
+- `NC_LOCAL_DIR` - user directory in Jupyter to be synchronized; default: `/home/jovyan`
+- `NC_JUPYTER_LABEL` - name of the JupyterHub instance to be presented to Nextcloud
 (will be seen in Nextcloud user profile in app passwords) 
-- JUPYTERHUB_CRYPT_KEY - crypt key as expected by JupyterHub; 
+- `JUPYTERHUB_CRYPT_KEY` - crypt key as expected by JupyterHub; 
 for instance, generate with something like `$(openssl rand -hex 32)`
 
 ## Implementation details
