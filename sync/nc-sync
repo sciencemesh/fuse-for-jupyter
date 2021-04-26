@@ -35,7 +35,7 @@ function create_remote_dir() {
 }
 
 # ensure that the local dir exists
-[ -d $NC_LOCAL_DIR ]
+[ -d $NC_LOCAL_DIR ] || mkdir -p $NC_LOCAL_DIR
 
 # ensure that the remote dir exists
 echo ""
