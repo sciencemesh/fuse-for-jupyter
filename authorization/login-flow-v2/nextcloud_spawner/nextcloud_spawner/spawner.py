@@ -5,6 +5,7 @@ from kubespawner import KubeSpawner
 
 from .credentials import NcCredentials, NcAuthorizationFlow
 from .nc_handler import NextcloudFilesystemHandlerContainer
+from .messages import getmsg
 
 # just checking if it's set because it's needed
 os.environ['JUPYTERHUB_CRYPT_KEY']
@@ -38,14 +39,14 @@ class NextcloudSpawnerMixin:
         """
         if form_data.get('reset_authorization_flow', False):
             self._reset_nc_authorization_flow()
-            raise Exception('Ok, try again now!')
+            raise Exception(getmsg('NC_AUTHZ_FLOW_RESET_DONE'))
 
         nc_credentials = self._try_reading_credentials_from_nc()
         if nc_credentials:
             # returned data will be saved in the Hub db
             return nc_credentials.to_encrypted_dict()
         else:
-            raise Exception('The access is not yet granted in Nextcloud!')
+            raise Exception(getmsg('NO_NC_GRANT'))
 
     def pre_spawn_hook(self, _):
         if not hasattr(self, 'extra_containers'):
@@ -59,8 +60,7 @@ class NextcloudSpawnerMixin:
         except NcCredentials.DeserializationError:
             # illegal state
             self.log.error('NC credentials cannot be read from user_options. The options are: %s' % self.user_options)
-            raise Exception('Nextcloud credentials cannot be found. ' +
-                            'If the problem persists, please contact administrator.')
+            raise Exception(getmsg('NC_CREDENTIALS_DESERIALIZATION_ERROR'))
 
     def _has_valid_nc_credentials(self):
         try:
