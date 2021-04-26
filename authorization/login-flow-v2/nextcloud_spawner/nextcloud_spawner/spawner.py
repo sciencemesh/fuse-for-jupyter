@@ -36,6 +36,10 @@ class NextcloudSpawnerMixin:
 
         Form data comes as a dict of lists of strings.
         """
+        if form_data.get('reset_authorization_flow', False):
+            self._reset_nc_authorization_flow()
+            raise Exception('Ok, try again now!')
+
         nc_credentials = self._try_reading_credentials_from_nc()
         if nc_credentials:
             # returned data will be saved in the Hub db

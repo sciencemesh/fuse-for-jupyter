@@ -36,6 +36,13 @@
     <a href="{{spawner_options_form['authorization_url'] | safe}}" target="_blank" class="btn btn-jupyter form-control" id="btn-grant">
       Grant access in Nextcloud
     </a>
+    <div id="reset-form-container" class="text-muted text-center" style="display:none;">
+      Not working? Does the Nextcloud say the token is expired?
+      <form action="{{url}}" method="post" role="form">
+        <input type="hidden" name="reset_authorization_flow" value="1">
+        <input type="submit" value="Reset and start again!" class="btn btn-default">
+      </form>
+    </div>
 
     <p>&nbsp;</p>
     <p>When the access is granted, you can:</p>
@@ -68,5 +75,20 @@
     });
   }
   setInterval(waitForSpawning, INTERVAL_SECONDS * 1000);
+</script>
+{#
+  shows #reset-form-container after some period since clicking the grant button
+  as a kind of helper in token expiration troubles
+#}
+<script type="text/javascript">
+  var clicked = 0;
+  jQuery('#btn-grant').click(function(){
+    if(!clicked){
+      setTimeout(function(){
+        jQuery('#reset-form-container').show(500);
+      }, 7 * 1000);
+      clicked = 1;
+    }
+  });
 </script>
 {% endblock %}
