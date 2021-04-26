@@ -28,7 +28,10 @@ USER root
 
 # installing dependencies for running the http proxy and the notebook server locally
 RUN apt-get update && \
-    apt-get install -y nodejs-dev node-gyp libssl1.0-dev npm && \
+    curl -sL https://deb.nodesource.com/setup_14.x -o /tmp/nodesource_setup.sh && \
+    bash /tmp/nodesource_setup.sh && \
+    rm /tmp/nodesource_setup.sh && \
+    apt-get install -y nodejs && \
     npm install -g configurable-http-proxy && \
     rm -rf /var/lib/apt/lists/* && \
     pip3 install \
