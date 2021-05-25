@@ -55,7 +55,7 @@ class NextcloudSpawnerMixin:
             return
 
         try:
-            handler_container = NextcloudFilesystemHandlerContainer(self._get_stored_nc_credentials())
+            handler_container = NextcloudFilesystemHandlerContainer(self._get_stored_nc_credentials(), self.volume_mounts)
             self.extra_containers.append(handler_container.to_extra_container_dict())
         except NcCredentials.DeserializationError:
             # illegal state

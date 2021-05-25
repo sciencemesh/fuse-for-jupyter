@@ -12,8 +12,13 @@ class NextcloudFilesystemHandlerContainer:
     e.g. Nextcloudcmd - the Nextcloud sync client
     """
 
-    def __init__(self, nc_credentials):
+    def __init__(self, nc_credentials, volume_mounts):
+        """
+        :param nc_credentials: instance of NcCredentials
+        :param volume_mounts: volume mounts in the format of KubeSpawner.volume_mounts
+        """
         self.nc_credentials = nc_credentials
+        self.volume_mounts = volume_mounts
 
         self.nc_url = NC_URL
         self.nc_handler_image = NC_HANDLER_IMAGE
@@ -24,10 +29,7 @@ class NextcloudFilesystemHandlerContainer:
         return {
             'name': 'nc-handler',
             'image': self.nc_handler_image,
-            'volumeMounts': [{
-                'mountPath': '/home/jovyan',
-                'name': 'volume-{username}',
-            }],
+            'volumeMounts': self.volume_mounts,
             'env': self._build_k8s_env_dict(),
         }
 
