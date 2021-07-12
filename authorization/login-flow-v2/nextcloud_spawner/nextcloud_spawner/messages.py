@@ -2,6 +2,7 @@ _MESSAGES = {
     'NO_NC_GRANT': 'The access is not yet granted in Nextcloud!',
     'NC_AUTHZ_FLOW_RESET_DONE': 'Ok, try again now!',
     'NC_CREDENTIALS_DESERIALIZATION_ERROR': 'Nextcloud credentials cannot be found. If the problem persists, please contact administrator.',
+    'NC_CONNECTION_ERROR': 'Error when communicating with Nextcloud. Try again later.',
 }
 
 def getmsg(msg_code, fail_silently=True):

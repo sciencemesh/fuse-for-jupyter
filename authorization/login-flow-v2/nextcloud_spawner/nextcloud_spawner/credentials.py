@@ -1,10 +1,12 @@
 import os
 
 import requests
+from requests import RequestException
 from requests.auth import HTTPBasicAuth
 from traitlets.config import LoggingConfigurable
 
 from .crypto import encrypt, decrypt
+from .messages import getmsg
 
 NC_JUPYTER_LABEL = os.environ['NC_JUPYTER_LABEL']
 
@@ -38,6 +40,15 @@ class NcCredentials:
             self._DICT_NAME_USER: encrypt(self.user),
             self._DICT_NAME_PASSWORD: encrypt(self.password),
         }
+
+
+class NcRequestException(Exception):
+    def __init__(self):
+        # log_message will be printed by JupyterHub's BaseHandler
+        self.log_message = getmsg('NC_CONNECTION_ERROR')
+
+    def __str__(self):
+        return "%s: %s" % (self.__class__.__name__, self.__cause__)
 
 
 class NcAuthorizationFlow(LoggingConfigurable):
@@ -91,11 +102,15 @@ class NcAuthorizationFlow(LoggingConfigurable):
             url = path
         else:
             url = self._build_url(path)
+
         self.log.info('%s %s' % (method, url))
-        r = requests.request(method, url, headers={
-            'User-Agent': self.client_name,
-        }, **kwargs)
-        return r
+        try:
+            r = requests.request(method, url, headers={
+                'User-Agent': self.client_name,
+            }, **kwargs)
+            return r
+        except RequestException as e:
+            raise NcRequestException() from e
 
     def _build_url(self, path):
         assert not self.nc_url.endswith('/'), self.nc_url
